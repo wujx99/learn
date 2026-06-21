@@ -1,0 +1,7 @@
+interface:
+  display_name: "Paper Library Archiver"
+  short_description: "Analyze TeX papers into archived Markdown notes."
+  default_prompt: "Use $paper-library-archiver to analyze the paper source in _inbox and archive it as a structured Markdown note."
+
+policy:
+  allow_implicit_invocation: true
