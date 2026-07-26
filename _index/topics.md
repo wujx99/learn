@@ -9,3 +9,6 @@ over one-off paper-specific labels.
 | reinforcement-learning | Reinforcement Learning | Methods that improve policies from reward feedback, rollouts, interventions, or value estimates. |
 | offline-rl | Offline RL | Batch or iterated RL methods that train from previously collected demonstrations, rollouts, and corrections. |
 | autonomous-driving-world-models | Autonomous Driving World Models | Generative spatio-temporal environment models, future prediction, behavior planning, and closed-loop simulation for autonomous driving. |
+| training-loop | Training Loop | The minimal optimization loop, validation, state management, and practical extensions used to train neural networks. |
+| distributed-training | Distributed Training | Communication, state sharding, model partitioning, hybrid parallelism, and performance reasoning for multi-accelerator training. |
+| pytorch-ddp | PyTorch DDP | Practical synchronous data-parallel training from one process to single-node and multi-node torchrun deployments. |
