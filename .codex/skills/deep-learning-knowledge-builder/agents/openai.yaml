@@ -1,0 +1,4 @@
+interface:
+  display_name: "Deep Learning Knowledge Builder"
+  short_description: "Build focused deep-learning learning notes and notebooks."
+  default_prompt: "Use $deep-learning-knowledge-builder to help me define and study a focused deep-learning topic, then archive the result."

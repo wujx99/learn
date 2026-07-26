@@ -1,19 +1,20 @@
 # Learn
 
-This repository is a personal paper-learning library. Raw papers, TeX source trees,
-and PDFs enter through `_inbox/`; durable knowledge lives in Markdown notes,
-indexes, templates, and selected note assets.
+This repository is a personal deep-learning knowledge base. It combines
+paper-specific close reading with focused, reusable learning documents and
+executable notebooks.
 
 ## Repository Layout
 
 ```text
 _inbox/             Local input area for papers and TeX source trees.
-_index/             Library-wide indexes and reading log.
+_index/             Shared topic, paper, and knowledge indexes.
 _templates/         Reusable note templates.
 papers/             Topic-based paper notes.
+knowledge/          Focused conceptual notes and executable learning notebooks.
 ```
 
-## Workflow
+## Paper Workflow
 
 1. Put a paper PDF or extracted TeX directory under `_inbox/`.
 2. Read the TeX source when available; use the PDF only as a fallback or visual reference.
@@ -24,3 +25,15 @@ papers/             Topic-based paper notes.
 Raw source bundles and PDFs are intentionally ignored by Git. Keep them in
 `_inbox/` while processing, then move them to `_inbox/_processed/` or delete them
 outside the formal library when no longer needed.
+
+## Knowledge Workflow
+
+1. Start with a narrowly scoped deep-learning topic.
+2. Select the aspects to study from a short, topic-specific set of suggestions.
+3. Use Markdown for concept-led material or a PyTorch notebook when running and
+   modifying code is central to learning.
+4. Keep one canonical, continuously improved document under
+   `knowledge/<topic-slug>/`.
+5. Update `_index/knowledge.md` and reuse topic slugs from `_index/topics.md`.
+6. Link reusable knowledge to relevant paper notes without nesting general
+   tutorials inside a paper directory.
