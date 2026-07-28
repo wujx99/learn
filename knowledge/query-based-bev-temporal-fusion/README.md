@@ -201,6 +201,123 @@ $$
 
 不存在无条件最优方案。稠密 BEV memory 用计算换场景完整性，object memory 用召回和背景信息换效率；显式窗口保留原始证据，递归状态则用压缩和误差累积换流式性能。
 
+## 面向规划的 40–60 帧 dense BEV
+
+如果传感器频率为 10 Hz，40–60 帧对应约 4–6 秒。规划需要的是这个时间跨度内的**充分状态**，而不一定是 40–60 份等分辨率、可被任意查询的历史 feature。
+
+### 静态与动态需要不同的时间分辨率
+
+自动驾驶场景不能严格只分成“OD 与静态”两项，但可以先用三类状态理解：
+
+| 状态 | 长历史的作用 | 适合的时间分辨率 |
+| --- | --- | --- |
+| 静态结构：道路、边界、固定障碍物 | 补全遮挡、扩大已观测区域、稳定几何与语义 | 长寿命、低频更新；旧观测仍有价值 |
+| 动态交通参与者 | 估计速度、加速度、意图和遮挡后的存在概率 | 近期高频；越旧的精确位置越快失效 |
+| 场景状态：信号灯、临时施工、可通行性 | 既可能长期稳定，也可能离散切换 | 需显式置信度、年龄和状态转移 |
+
+因此，不是只有动态障碍物需要 40–60 帧，也不是所有信息都需要保存 40–60 帧。更准确的说法是：
+
+- 规划可能需要 4–6 秒的上下文；
+- 动态分支需要最近若干帧的高频细节，以及更长时间尺度的压缩运动状态；
+- 静态分支需要长时累计结果，但通常不需要保留每一帧；
+- 对所有历史帧做全量 dense attention 是一种数据结构选择，不是规划需求本身。
+
+### Instance query 是否必须有检测监督
+
+Instance query 本身只是一个槽位，并不天然等于动态障碍物。但 StreamPETR、Sparse4D 等检测式方法通常通过分类分数、3D box 回归和 top-k selection 让 query 获得“一个 query 对应一个对象”的语义，其 memory 更新也依赖这套检测监督。
+
+只用 occupancy loss 并非数学上不能学习 instance slots，但监督存在欠定性：多个 query 可以共同解释同一片 occupancy，一个 query 也可以覆盖多个对象；query 的置换、合并和拆分通常不影响最终 dense loss。因此纯 occupancy loss 很难稳定地产生跨帧一致的 object identity。
+
+如果只有 occupancy 监督，有三条路径：
+
+1. **不强求 instance 化**：维护 dense scene memory，再增加 motion/uncertainty-aware update。这是风险最低的起点。
+2. **弱 instance 化**：从 occupancy connected components、语义类别、ego-warp 后的变化区域或预测 flow 产生 pseudo instances，再监督 slot assignment 和跨帧一致性。
+3. **slot-based occupancy**：让多个 slots 解码并合成 occupancy，同时加入 exclusivity、coverage、temporal consistency、slot persistence 和 motion prediction loss。它不需要 3D box 标注，但已经超出“只有一个最终 occupancy CE loss”。
+
+如果 occupancy 标注包含 semantic class、future occupancy 或 occupancy flow，弱 instance 化更可行；如果只有当前帧 binary occupancy，直接采用检测式 instance bank 的风险很高。
+
+### Dense recurrent memory 的主要问题
+
+递归更新
+
+$$
+H_t=U(H_{t-1},B_t)
+$$
+
+能把推理状态从 $O(T H W C)$ 降为 $O(HWC)$，但 40–60 步会暴露以下问题：
+
+- **信息瓶颈与覆盖写**：同一个 $C$ 维 cell 必须同时保存静态结构、动态状态、遮挡证据和不确定性；新观测可能覆盖仍有用的旧证据。
+- **静动态对齐冲突**：ego warp 可对齐静态世界，却不能对齐运动目标；统一 warp 后，动态部分会拖影。
+- **递归漂移**：pose 噪声、错误 occupancy 和错误更新会被下一步继续读取，形成 ghost occupancy。
+- **历史年龄不可辨**：若没有 time/age embedding，网络不易判断某个 feature 来自刚刚观测还是数秒前。
+- **训练与推理不一致**：训练只 unroll 4–8 帧而推理 60 帧，会出现 feature norm、置信度和误差分布漂移。
+- **长程梯度不足**：完整 60 帧 BPTT 显存高；截断 BPTT 又使早期状态很难收到规划或 occupancy loss 的有效梯度。
+- **场景切换与失效恢复**：必须定义 reset、位姿跳变、掉帧和长时间无观测时的衰减策略。
+
+[VideoBEV](https://arxiv.org/abs/2303.05970) 说明简单 recurrent BEV 可以有效利用长历史，但也指出 BEVFormer 式递归不一定自然地从更多帧持续获益。较新的 [OnlineBEV](https://arxiv.org/abs/2507.08644) 将长时增益受限归因于动态目标造成的对齐困难，并额外学习 motion-guided alignment。
+
+### Deformable attention 能解决什么，不能解决什么
+
+Deformable attention 将每个 query 的读取从全局 $HW$ 个位置降到 $K$ 个采样点：
+
+$$
+y_i=\sum_{k=1}^{K}a_{ik}H\bigl(p_i+\Delta p_{ik}\bigr).
+$$
+
+它适合修正小范围错位和按内容选择局部历史，但不是长时 memory 的完整答案：
+
+- 若 dense queries 对 60 份历史逐一采样，复杂度仍为 $O(THWK)$；只是空间读取变稀疏，时间维没有消失。
+- 若只从一个 recurrent state 采样，早期历史必须已被压进该 state；deformable attention 无法恢复被覆盖的信息。
+- 大位移、快速运动、转弯、掉帧或错误 pose 可能使真实对应点落到采样范围之外。
+- 每个 BEV cell 都预测 offset 时，空区域也产生计算；dense query 数量大时成本仍明显。
+- 同一 cell 中混合静态背景和动态目标时，一组 offsets 未必能同时对齐两者。
+- 长期不可见区域需要显式 age/confidence，否则模型可能把陈旧记忆当作当前事实。
+
+所以 deformable attention 更适合作为**局部读取与残差对齐算子**，不应单独承担历史压缩、遗忘和不确定性管理。
+
+### 推荐的分层时空 memory
+
+对“dense BEV query + occupancy-only + 40–60 帧”更合适的起点是三层结构：
+
+```text
+当前 dense BEV B_t
+  ├─ 短期高频 memory：最近 4–8 帧，高分辨率，motion-aware deformable fusion
+  ├─ 中期 recurrent state：约 1–2 秒，门控更新，保存 occupancy dynamics
+  └─ 长期静态 memory：覆盖 4–6 秒或更久，低频/低分辨率，confidence-age update
+                         ↓
+              gated multi-scale fusion
+                         ↓
+                  occupancy + planning
+```
+
+一种具体参数化为：
+
+$$
+H_t^{short}=\operatorname{Fuse}(B_{t-s+1:t}),
+$$
+
+$$
+H_t^{dyn}=\operatorname{GRU}_{bev}
+\left(\operatorname{MotionAlign}(H_{t-1}^{dyn},B_{t-1:t}),B_t\right),
+$$
+
+$$
+H_t^{static}=g_t\odot B_t^{static}
++(1-g_t)\odot\operatorname{EgoWarp}(H_{t-1}^{static}),
+$$
+
+再令当前 dense queries 分别读取三个 memory，并用 uncertainty、age 和 occupancy change 预测门控权重。
+
+实践上可以先做以下最小版本：
+
+- 最近 4 帧保留全分辨率 BEV；
+- 第 5–20 帧压成一个 motion-aware recurrent state；
+- 第 20–60 帧只保留下采样后的 static/slow memory，并记录 `age` 与 `confidence`；
+- 短期分支使用 deformable attention，中长期分支使用 gated convolution 或少量 cross-attention；
+- 训练先 unroll 8–12 帧，并随机注入由更长序列预计算或 stop-gradient 得到的历史状态，而不是一开始完整反传 60 帧。
+
+在只有 occupancy 监督时，可增加不需要 box 标注的辅助目标：ego-warp 后的 temporal consistency、future occupancy、occupancy flow、visibility/uncertainty、随机遮帧重建和 memory age calibration。这些信号比强行引入 object queries 更贴合现有标注。
+
 ## 工程风险与排查信号
 
 ### 坐标变换方向写反
