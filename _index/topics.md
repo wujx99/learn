@@ -15,3 +15,4 @@ over one-off paper-specific labels.
 | distributed-training | Distributed Training | Communication, state sharding, model partitioning, hybrid parallelism, and performance reasoning for multi-accelerator training. |
 | pytorch-ddp | PyTorch DDP | Practical synchronous data-parallel training from one process to single-node and multi-node torchrun deployments. |
 | pytorch-onnx-tensorrt-deployment | PyTorch ONNX TensorRT Deployment | Model export, graph validation, TensorRT engine building, numerical alignment, and performance analysis. |
+| pytorch-custom-operators-to-tensorrt | PyTorch Custom Operators to TensorRT | Training-capable custom operators, dispatcher integration, ONNX translation, and TensorRT Plugin V3 deployment. |
