@@ -16,3 +16,4 @@ over one-off paper-specific labels.
 | pytorch-ddp | PyTorch DDP | Practical synchronous data-parallel training from one process to single-node and multi-node torchrun deployments. |
 | pytorch-onnx-tensorrt-deployment | PyTorch ONNX TensorRT Deployment | Model export, graph validation, TensorRT engine building, numerical alignment, and performance analysis. |
 | pytorch-custom-operators-to-tensorrt | PyTorch Custom Operators to TensorRT | Training-capable custom operators, dispatcher integration, ONNX translation, and TensorRT Plugin V3 deployment. |
+| pytorch-onnx-tensorrt-quantization | PyTorch ONNX TensorRT Quantization | Quantization math, calibration, PTQ/QAT, explicit ONNX Q/DQ graphs, and TensorRT deployment. |

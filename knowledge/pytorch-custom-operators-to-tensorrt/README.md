@@ -355,4 +355,4 @@ custom-op/
 
 ## 下一步
 
-进入模型量化专题：从数值表示与 observer 开始，连接 PyTorch PTQ/QAT、ONNX Q/DQ 与 TensorRT 强类型量化，并建立逐层误差定位与性能门禁。
+进入[模型量化专题](../pytorch-onnx-tensorrt-quantization/README.md)：从数值表示与 observer 开始，连接 PyTorch PTQ/QAT、ONNX Q/DQ 与 TensorRT 强类型量化，并建立逐层误差定位与性能门禁。

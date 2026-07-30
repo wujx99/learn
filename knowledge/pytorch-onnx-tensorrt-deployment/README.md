@@ -656,5 +656,5 @@ TensorRT FP32 正确，FP16 不正确
 ## 下一步
 
 1. [**训练算子扩展到部署 Plugin**](../pytorch-custom-operators-to-tensorrt/README.md)：从 `torch.autograd.Function`、C++/CUDA Extension，到 ONNX translation 和 TensorRT Plugin V3，重点理解 forward/backward 与部署 forward 的边界。
-2. **模型量化与 TensorRT INT8**：从数值表示、scale/zero-point、PTQ calibration，到 QAT、敏感层和逐层精度定位。
+2. [**模型量化与 TensorRT INT8**](../pytorch-onnx-tensorrt-quantization/README.md)：从数值表示、scale/zero-point、PTQ calibration，到 QAT、敏感层和逐层精度定位。
 3. 回到本文练习，选择自己的真实模型建立 golden dataset、manifest 和自动回归门禁。
