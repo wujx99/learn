@@ -1,11 +1,15 @@
 ---
 name: deep-learning-knowledge-builder
-description: Build and maintain focused deep-learning learning documents through an interactive topic-definition workflow. Use when the user says they want to learn, understand, review, or systematically study a deep-learning concept, implementation pattern, or engineering practice; asks to turn a discussion into durable repository knowledge; or wants to extend an existing knowledge topic. Clarify desired aspects with suggested choices, default executable code content to PyTorch notebooks, create or update one canonical Chinese document per narrowly scoped topic, and integrate it with the repository's shared topics, paper notes, and knowledge index.
+description: Build and maintain focused deep-learning learning documents through an interactive topic-definition workflow. Use only when the user explicitly invokes `$deep-learning-knowledge-builder` or explicitly names `deep-learning-knowledge-builder` and asks to use it. Do not activate for ordinary deep-learning questions, explanations, study requests, reviews, or repository discussions; handle those normally without this skill. When explicitly invoked, clarify desired aspects, default executable code content to PyTorch notebooks, create or update one canonical Chinese document per narrowly scoped topic, and integrate it with the repository's shared topics, paper notes, and knowledge index.
 ---
 
 # Deep Learning Knowledge Builder
 
 Turn a focused learning request into one durable, evolving knowledge document. Treat the conversation as guided study, not merely a document-generation command.
+
+## Activation Boundary
+
+Run this workflow only after the user explicitly invokes or names `deep-learning-knowledge-builder`. Topic overlap, a request to explain or study deep learning, or the presence of this repository is not sufficient. Without an explicit invocation, answer the question normally and do not create or update learning artifacts or indexes through this skill.
 
 ## Workflow
 
@@ -28,6 +32,9 @@ Turn a focused learning request into one durable, evolving knowledge document. T
 4. Build the material around the learner's choices:
    - Start with learning goals and prerequisites.
    - Establish a mental model before details.
+   - When the overall landscape is easier to understand visually, place a Mermaid diagram near the mental model to show the main components, relationships, data flow, or learning progression.
+   - Use additional Mermaid diagrams for key concepts when structure, sequence, hierarchy, state transitions, or interactions are clearer in a diagram than in prose. Keep prose for definitions, derivations, caveats, and precise quantitative claims.
+   - Make each diagram explanatory rather than decorative: introduce what to look for, keep it focused on one teaching point, and explain the takeaway immediately after it. Do not duplicate an adjacent list or paragraph as a diagram.
    - Progress from a minimal example to realistic usage.
    - Explain mechanisms, tradeoffs, common mistakes, and debugging signals.
    - Include self-check questions or small exercises and a concise next-step path.
@@ -41,6 +48,7 @@ Turn a focused learning request into one durable, evolving knowledge document. T
    - Add reciprocal links when a paper note directly motivates or applies the knowledge topic and editing that note is in scope.
 6. Validate:
    - Read `references/quality-checklist.md` and apply it before finishing.
+   - Check every Mermaid block for valid syntax, readable labels, and consistency with the surrounding explanation. Prefer broadly supported diagram types such as `flowchart`, `sequenceDiagram`, `stateDiagram-v2`, and `classDiagram`; avoid LaTeX, long prose, or implementation-sensitive syntax inside node labels.
    - Verify all relative links and ensure the canonical artifact is indexed.
    - For notebooks, execute all cells in order when dependencies and compute permit. If execution is not possible, state exactly what remains unverified.
 
