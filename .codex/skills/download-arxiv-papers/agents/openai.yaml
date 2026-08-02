@@ -1,0 +1,4 @@
+interface:
+  display_name: "Download arXiv Papers"
+  short_description: "Resolve papers and archive arXiv source plus PDFs"
+  default_prompt: "Use $download-arxiv-papers to resolve these paper names and download their arXiv sources and PDFs into this repository."

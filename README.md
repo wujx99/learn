@@ -8,7 +8,7 @@ executable notebooks.
 
 ```text
 _inbox/             Local input area for papers and TeX source trees.
-_index/             Shared topic, paper, and knowledge indexes.
+_index/             Shared topic, paper, knowledge, and information-source indexes.
 _templates/         Reusable note templates.
 papers/             Topic-based paper notes.
 knowledge/          Focused conceptual notes and executable learning notebooks.
@@ -37,3 +37,9 @@ outside the formal library when no longer needed.
 5. Update `_index/knowledge.md` and reuse topic slugs from `_index/topics.md`.
 6. Link reusable knowledge to relevant paper notes without nesting general
    tutorials inside a paper directory.
+
+## Information Sources
+
+Keep recurring paper, technical, course, and engineering sources in
+[`_index/sources.md`](_index/sources.md). Add one row per source and describe
+what it is useful for instead of storing an unexplained URL list.
