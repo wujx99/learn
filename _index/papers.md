@@ -8,5 +8,10 @@
 | Plan-R1: Safe and Feasible Trajectory Planning as Language Modeling | 2025 | autonomous-driving-trajectory-planning, reinforcement-learning | — | read | [note](../papers/autonomous-driving-trajectory-planning/2025-plan-r1/README.md) |
 | BEVFormer: Learning Bird's-Eye-View Representation from Multi-Camera Images via Spatiotemporal Transformers | 2022 | query-based-bev-temporal-fusion | bevformer | read | [note](../papers/query-based-bev-temporal-fusion/2022-bevformer/README.md) |
 | BEVFormer v2: Adapting Modern Image Backbones to Bird's-Eye-View Recognition via Perspective Supervision | 2023 | query-based-bev-temporal-fusion | bevformer | read | [note](../papers/query-based-bev-temporal-fusion/2023-bevformer-v2/README.md) |
+| PETR: Position Embedding Transformation for Multi-View 3D Object Detection | 2022 | query-based-bev-temporal-fusion | petr | read | [note](../papers/query-based-bev-temporal-fusion/2022-petr/README.md) |
+| Time Will Tell: New Outlooks and A Baseline for Temporal Multi-View 3D Object Detection (SOLOFusion) | 2023 | camera-based-bev-temporal-fusion | temporal-bev | read | [note](../papers/camera-based-bev-temporal-fusion/2023-solofusion/README.md) |
+| Exploring Object-Centric Temporal Modeling for Efficient Multi-View 3D Object Detection (StreamPETR) | 2023 | query-based-bev-temporal-fusion, camera-based-bev-temporal-fusion | petr | read | [note](../papers/query-based-bev-temporal-fusion/2023-streampetr/README.md) |
+| FB-OCC: 3D Occupancy Prediction based on Forward-Backward View Transformation | 2023 | camera-based-3d-occupancy-prediction | fb-bev | read | [note](../papers/camera-based-3d-occupancy-prediction/2023-fb-occ/README.md) |
+| Exploring Recurrent Long-Term Temporal Fusion for Multi-View 3D Perception (VideoBEV) | 2024 | camera-based-bev-temporal-fusion | temporal-bev | read | [note](../papers/camera-based-bev-temporal-fusion/2024-videobev/README.md) |
 
 Add each generated paper note here after it is archived under `papers/`.

@@ -12,6 +12,8 @@ over one-off paper-specific labels.
 | autonomous-driving-trajectory-planning | Autonomous Driving Trajectory Planning | Learning-based, rule-based, and hybrid trajectory planning with closed-loop safety, progress, comfort, and interaction. |
 | autonomous-driving-coordinate-transforms | Autonomous Driving Coordinate Transforms | Coordinate frames, rigid transformations, camera projection, and fisheye geometry for autonomous driving. |
 | query-based-bev-temporal-fusion | Query-based BEV Temporal Fusion | Temporal state, alignment, memory, and query propagation for camera-based BEV perception. |
+| camera-based-bev-temporal-fusion | Camera-based BEV Temporal Fusion | Explicit depth lifting, dense BEV alignment, fixed-window fusion, and recurrent temporal memory for multi-camera perception. |
+| camera-based-3d-occupancy-prediction | Camera-based 3D Occupancy Prediction | Dense 3D occupancy and semantic prediction from multi-camera images using forward lifting, backward querying, temporal fusion, and voxel supervision. |
 | training-loop | Training Loop | The minimal optimization loop, validation, state management, and practical extensions used to train neural networks. |
 | distributed-training | Distributed Training | Communication, state sharding, model partitioning, hybrid parallelism, and performance reasoning for multi-accelerator training. |
 | pytorch-ddp | PyTorch DDP | Practical synchronous data-parallel training from one process to single-node and multi-node torchrun deployments. |
