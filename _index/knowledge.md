@@ -10,6 +10,7 @@
 | PyTorch ONNX TensorRT Deployment | markdown | PyTorch | learning | training-loop | [document](../knowledge/pytorch-onnx-tensorrt-deployment/README.md) |
 | PyTorch Custom Operators to TensorRT | markdown | PyTorch | learning | pytorch-onnx-tensorrt-deployment | [document](../knowledge/pytorch-custom-operators-to-tensorrt/README.md) |
 | PyTorch ONNX TensorRT Quantization | markdown | PyTorch | learning | pytorch-onnx-tensorrt-deployment, pytorch-custom-operators-to-tensorrt | [document](../knowledge/pytorch-onnx-tensorrt-quantization/README.md) |
+| Positional Encoding | markdown | framework-agnostic | learning | — | [document](../knowledge/positional-encoding/README.md) |
 
 Add each canonical learning document here. Reuse stable slugs from
 [`topics.md`](topics.md) and link related paper notes from the document itself.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Document QA Curator"
+  short_description: "Reuse and curate QA in paper and knowledge notes."
+  default_prompt: "Use $document-qa-curator to answer my question about this paper or knowledge note and maintain its QA section."

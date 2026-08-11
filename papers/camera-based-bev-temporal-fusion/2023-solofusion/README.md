@@ -158,3 +158,79 @@ ConvNeXt-B 的 nuScenes test 结果为 $0.540$ mAP / $0.619$ NDS，mATE $0.453$�
 2. 再看双路径图，明确 HR-ST 修深度、LR-LT 聚合运动。
 3. 看帧数和模块消融，尤其注意 16 到 41 帧的回落。
 4. 最后接着读 VideoBEV，理解固定窗口为何被改成 recurrent memory。
+
+## QA
+
+### Q：SOLOFusion 的 ego warp 是怎么做的？warp 后各帧 BEV 如何拼接和融合？
+
+A：SOLOFusion 的 LR-LT 分支是在 **BEV feature map** 上做 ego-motion warp，而不是直接 warp 图像特征或 3D box。每帧先经 LSS/BEVDepth 风格的 view transformation 得到
+
+$$
+B_t\in\mathbb{R}^{B\times C\times H\times W},
+$$
+
+官方 R50 配置中 $C=80$。
+
+#### Ego warp
+
+历史缓存不是 $T$ 个独立 tensor，而是已经沿通道打包的
+
+$$
+\mathcal H_{t-1}\in\mathbb{R}^{B\times TC\times H\times W}.
+$$
+
+其中所有历史特征都已递归对齐到 $t-1$ 时刻。到达当前帧 $t$ 后，代码为当前 BEV 的每个输出网格位置构造齐次坐标，并计算它在上一时刻 BEV 中的采样位置。记：
+
+- $S$：`feat2bev`，把 BEV 网格索引转换为以米为单位的 LiDAR/BEV 坐标；
+- $A_t,A_{t-1}$：当前帧和上一帧的数据增强变换；
+- $T_{t\rightarrow t-1}$：由 nuScenes ego pose 得到的 current-LiDAR-to-previous-LiDAR 变换。
+
+则 backward sampling 的坐标变换为
+
+$$
+u_{t-1}
+=
+S^{-1}A_{t-1}T_{t\rightarrow t-1}A_t^{-1}S u_t.
+$$
+
+也就是：
+
+```text
+当前 BEV 网格
+  -> 当前增强坐标中的米制位置
+  -> 撤销当前增强
+  -> 当前 LiDAR 坐标变到上一帧 LiDAR 坐标
+  -> 应用上一帧增强
+  -> 上一帧 BEV 网格坐标
+  -> 双线性采样历史特征
+```
+
+得到的坐标归一化到 $[-1,1]$ 后，通过 `F.grid_sample(..., align_corners=True, mode='bilinear')` 一次性采样全部 $TC$ 个历史通道。之所以使用“当前位置 $\rightarrow$ 历史采样位置”的变换，是因为 `grid_sample` 做的是 backward warp：为每个当前输出 cell 查询历史 feature map，而不是把历史 cell 向前散射到当前网格。[官方实现中的坐标构造与采样](https://github.com/Divadi/SOLOFusion/blob/683edce81b619098d1ba143d7b15b1e6aa23337a/mmdet3d/models/detectors/solofusion.py#L315-L347)
+
+官方实现采用滚动缓存：缓存中的多帧特征已经对齐到上一帧，所以每个新时刻只需用同一个 $t\rightarrow t-1$ sampling grid 对整个缓存再 warp 一次，而不是分别从每个历史帧的原始 pose 重新计算到当前帧的变换。这样实现简单，但较老特征会经历多次插值。ego warp 只消除了自车运动造成的静态场景位移，不会补偿车辆、行人的独立运动，因此动态目标仍会在各通道中形成错位轨迹。
+
+#### 拼接与融合
+
+设 warp 后的历史缓存为
+
+$$
+\widetilde{\mathcal H}_{t-1}
+\in\mathbb{R}^{B\times TC\times H\times W}.
+$$
+
+融合过程是：
+
+1. 沿 **channel 维** 拼接当前 BEV 和全部已对齐历史 BEV：
+
+   $$
+   F_{cat}=[B_t;\widetilde{\mathcal H}_{t-1}]
+   \in\mathbb{R}^{B\times (T+1)C\times H\times W}.
+   $$
+
+2. reshape 为 $B\times(T+1)\times C\times H\times W$，给每一帧的每个 BEV cell 再拼一个时间差通道。默认关键帧间隔为 $0.5$ 秒，所以时间值为 $0,0.5,1.0,\ldots$ 秒。
+3. 对每个时刻共享一个 $1\times1$ convolution，将 $C+1$ 个通道（feature 加时间）编码回 $C$ 个通道。
+4. 再把时间维展平到 channel 维，通过另一个 $1\times1$ convolution 将 $(T+1)C$ 压缩到融合后的 $C_{out}$，随后送入 BEV encoder 和检测头。[官方实现中的时间编码、拼接与压缩](https://github.com/Divadi/SOLOFusion/blob/683edce81b619098d1ba143d7b15b1e6aa23337a/mmdet3d/models/detectors/solofusion.py#L349-L381)
+
+官方 R50 phase-2 配置为 $T=16$ 个历史帧、$C=80$、$C_{out}=160$，所以当前帧加历史一共形成 17 组 BEV feature，时间编码后先得到 $17\times80=1360$ 个拼接通道，再由 $1\times1$ convolution 压到 160 通道。[官方配置](https://github.com/Divadi/SOLOFusion/blob/683edce81b619098d1ba143d7b15b1e6aa23337a/configs/solofusion/r50-fp16_phase2.py#L82-L99)
+
+因此这里的“拼接”可以概括为：**空间位置先用 ego pose 对齐，时间帧再沿通道堆叠，最后用带时间差输入的 $1\times1$ convolution 学习跨帧融合**；它不是沿 BEV 的宽或高拼接，也不是求和或 temporal attention。
