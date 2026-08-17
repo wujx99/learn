@@ -15,6 +15,8 @@ over one-off paper-specific labels.
 | query-based-bev-temporal-fusion | Query-based BEV Temporal Fusion | Temporal state, alignment, memory, and query propagation for camera-based BEV perception. |
 | camera-based-bev-temporal-fusion | Camera-based BEV Temporal Fusion | Explicit depth lifting, dense BEV alignment, fixed-window fusion, and recurrent temporal memory for multi-camera perception. |
 | camera-based-3d-occupancy-prediction | Camera-based 3D Occupancy Prediction | Dense 3D occupancy and semantic prediction from multi-camera images using forward lifting, backward querying, temporal fusion, and voxel supervision. |
+| sparse-query-3d-perception | Sparse Query 3D Perception | Sparse instance queries, geometry-guided multi-view sampling, recurrent temporal state, and joint 3D detection/tracking. |
+| online-vectorized-hd-mapping | Online Vectorized HD Mapping | Online construction of instance-level polylines, polygons, centerlines, and temporally consistent local HD maps from onboard sensors. |
 | training-loop | Training Loop | The minimal optimization loop, validation, state management, and practical extensions used to train neural networks. |
 | distributed-training | Distributed Training | Communication, state sharding, model partitioning, hybrid parallelism, and performance reasoning for multi-accelerator training. |
 | pytorch-ddp | PyTorch DDP | Practical synchronous data-parallel training from one process to single-node and multi-node torchrun deployments. |
