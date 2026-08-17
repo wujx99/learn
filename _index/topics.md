@@ -10,6 +10,7 @@ over one-off paper-specific labels.
 | offline-rl | Offline RL | Batch or iterated RL methods that train from previously collected demonstrations, rollouts, and corrections. |
 | autonomous-driving-world-models | Autonomous Driving World Models | Generative spatio-temporal environment models, future prediction, behavior planning, and closed-loop simulation for autonomous driving. |
 | autonomous-driving-trajectory-planning | Autonomous Driving Trajectory Planning | Learning-based, rule-based, and hybrid trajectory planning with closed-loop safety, progress, comfort, and interaction. |
+| end-to-end-autonomous-driving | End-to-End Autonomous Driving | Unified perception, prediction, planning, sparse scene representations, and closed-loop driving policies. |
 | autonomous-driving-coordinate-transforms | Autonomous Driving Coordinate Transforms | Coordinate frames, rigid transformations, camera projection, and fisheye geometry for autonomous driving. |
 | autonomous-driving-map-od-supervision | Autonomous Driving Map and OD Supervision | Label production, target construction, matching, and losses for static maps and 3D object detection. |
 | query-based-bev-temporal-fusion | Query-based BEV Temporal Fusion | Temporal state, alignment, memory, and query propagation for camera-based BEV perception. |

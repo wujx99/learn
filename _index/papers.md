@@ -16,6 +16,9 @@
 | Sparse4D: Multi-view 3D Object Detection with Sparse Spatial-Temporal Fusion | 2022 | sparse-query-3d-perception | sparse4d | read | [note](../papers/sparse-query-3d-perception/2022-sparse4d/README.md) |
 | Sparse4D v2: Recurrent Temporal Fusion with Sparse Model | 2023 | sparse-query-3d-perception | sparse4d | read | [note](../papers/sparse-query-3d-perception/2023-sparse4d-v2/README.md) |
 | Sparse4D v3: Advancing End-to-End 3D Detection and Tracking | 2023 | sparse-query-3d-perception | sparse4d | read | [note](../papers/sparse-query-3d-perception/2023-sparse4d-v3/README.md) |
+| Sparse4D: Sparse-based End-to-End Multi-Sensor Temporal Perception | 2026 | sparse-query-3d-perception | sparse4d | read | [note](../papers/sparse-query-3d-perception/2026-sparse4d-tpami/README.md) |
+| SparseDrive: End-to-End Autonomous Driving via Sparse Scene Representation | 2025 | end-to-end-autonomous-driving | sparsedrive | read | [note](../papers/end-to-end-autonomous-driving/2025-sparsedrive/README.md) |
+| SparseDriveV2: Scoring is All You Need for End-to-End Autonomous Driving | 2026 | end-to-end-autonomous-driving, autonomous-driving-trajectory-planning | sparsedrive | read | [note](../papers/end-to-end-autonomous-driving/2026-sparsedrive-v2/README.md) |
 | MapTR: Structured Modeling and Learning for Online Vectorized HD Map Construction | 2023 | online-vectorized-hd-mapping | maptr | read | [note](../papers/online-vectorized-hd-mapping/2023-maptr/README.md) |
 | MapTRv2: An End-to-End Framework for Online Vectorized HD Map Construction | 2024 | online-vectorized-hd-mapping | maptr | read | [note](../papers/online-vectorized-hd-mapping/2024-maptr-v2/README.md) |
 | StreamMapNet: Streaming Mapping Network for Vectorized Online HD Map Construction | 2023 | online-vectorized-hd-mapping | — | read | [note](../papers/online-vectorized-hd-mapping/2023-streammapnet/README.md) |

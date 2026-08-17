@@ -177,3 +177,19 @@ v2 用 24 epochs 的 61.5 mAP 已超过 MapTR 110 epochs 的 58.7，核心证据
 - 我真正理解的部分：v2 的提升来自给 encoder 和 decoder 都增加更密集的训练信号，同时把最耗显存的 query 交互按结构拆轴。
 - 仍然不清楚的问题：训练期大量 one-to-many positives 是否会让模型更依赖数据集的固定地图模板，而非真正从当前传感器重建。
 - 后续要读的内容：StreamMapNet 的无地理重叠 split、显式 map topology 方法，以及无需 LiDAR 深度监督的几何学习。
+
+## QA
+
+### Q：MapTRv2 中的 one-to-one 正样本是什么意思？
+
+A：这里的“正样本”指一个经过 instance-level Hungarian matching、被分配给真实地图元素而不是 `no object` 的**预测 instance query**。更准确地说，它代表由一个 instance query 及其对应的 $N_v$ 个 hierarchical point queries 共同预测的完整地图实例，而不是单独一个折线点。
+
+假设 decoder 固定输出 $N=50$ 个候选地图实例，而当前场景只有 $M=8$ 个真实 divider、boundary 或 crossing。训练时先把 8 个 GT 补 42 个 $\varnothing$，再通过 Hungarian algorithm 做全局最优二分匹配：
+
+- 8 个 prediction queries 分别与 8 个真实地图实例匹配，成为 8 个正样本；
+- 剩余 42 个 prediction queries 与 $\varnothing$ 匹配，成为负样本，主要接受 `no object` 分类监督；
+- 对每个正样本，再在对应 GT 的合法点序 $\Gamma_i$ 中做 point-level matching，随后计算分类、逐点位置和边方向损失。
+
+“One-to-one”描述的是 **GT instance 与 prediction instance 的分配关系**：一个 GT 只能监督一个预测，一个预测也只能匹配一个 GT。它不表示一个预测点只对应一个 GT 点；后者属于下一步的 point-level matching。
+
+这种唯一分配让模型在推理时直接产生去重后的集合，不需要 NMS，但也导致正样本稀疏。上例中 50 个候选只有 8 个得到真实几何监督，尤其训练早期，大量尚不准确但接近 GT 的 queries 都被当作负样本。MapTRv2 因此增加独立的训练期 one-to-many 辅助分支：把每个 GT 重复 $K$ 次后与额外 queries 匹配，使一个 GT 最多产生 $K$ 个正预测；主 one-to-one 分支仍保留，辅助分支在推理时删除。

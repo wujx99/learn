@@ -160,3 +160,27 @@ nuScenes val 使用 crossing、divider、boundary 三类，Chamfer 阈值 $\{0.5
 - 我真正理解的部分：MapTR 的决定性创新是“定义正确的等价标签空间”，架构改动反而相对朴素。
 - 仍然不清楚的问题：permutation equivalence 解决表示歧义后，如何进一步把实例级几何提升为带方向、连接和交通规则的拓扑图。
 - 后续要读的内容：MapTRv2 的 one-to-many 与 decoupled self-attention、StreamMapNet 的时序记忆，以及显式 topology prediction 方法。
+
+## QA
+
+### Q：MapTR 中的 GKT、IPM、LSS 和 deformable attention 分别是什么意思？
+
+A：它们在 MapTR 的消融实验中都是可互换的 **2D-to-BEV transformation**：输入为多相机透视图特征，输出为统一车体坐标系下的 BEV 特征，之后才交给 MapTR 的 map decoder。四者最直观的区别是如何解决“某个 BEV 位置应该从图像的哪里取特征”。
+
+| 方法 | 核心做法 | 是否显式处理深度 | 主要特点与限制 |
+| --- | --- | --- | --- |
+| IPM | 假设目标位于固定地面平面，利用相机内外参把 BEV 网格与图像像素直接对应起来 | 否，深度由平面假设和几何关系唯一确定 | 简单直接，适合车道线等贴地元素；路面不平、物体离地或标定有误时，硬投影会失准 |
+| LSS | 每个像素预测离散深度分布，将图像特征沿相机射线“Lift”成视锥，再按三维坐标“Splat”到 BEV pillar | 是，预测每个像素的深度概率分布 | 能表达不同深度和高度，不受单一地面平面限制；构造稠密视锥，计算/显存较大，结果受深度估计质量影响 |
+| GKT | 将每个 BEV 网格以预设高度粗投影到各相机，在投影点周围展开固定局部 kernel，由 query 对窗口内特征做 attention | 不预测完整深度；几何只用于提供粗定位 | 介于硬投影和全局 attention 之间；局部窗口可容纳投影误差，并可用 LUT 预存 BEV-to-image 索引，部署高效 |
+| Deformable attention | 以 BEV 网格的几何投影为 reference point，只在其附近学习少量 sampling offsets 和 attention weights，从多相机、多尺度特征取样 | 通常用多个预设高度参考点，而非像 LSS 那样预测稠密深度分布 | 稀疏、可学习，采样位置比固定窗口灵活；实现和算子相对复杂，并仍依赖参考点几何质量 |
+
+可以进一步把它们理解为：
+
+- **IPM（Inverse Perspective Mapping）**：“我假定它就在地面上的这个位置，所以直接去唯一对应的像素取值。”本质是基于平面假设的逆透视/单应性映射。
+- **LSS（Lift-Splat-Shoot）**：“一个像素究竟有多远不确定，所以先预测它在多个深度 bin 上的概率，再把带权特征沿射线展开并汇聚到 BEV。”在 MapTR 中主要使用的是 Lift 和 Splat；原方法名称里的 Shoot 指下游在 BEV cost map 上评估规划轨迹，不是这里 2D-to-BEV 模块的必要步骤。
+- **GKT（Geometry-guided Kernel Transformer）**：“几何投影只需告诉我大概在哪；我在附近取一个 $K_h\times K_w$ patch，让 attention 自己判断哪些像素有用。”它不像 IPM 那样只信一个精确对应点，也不像全局 attention 那样搜索整幅图像。
+- **Deformable attention**：“几何先给 reference point，网络再学习少数几个偏移采样点及其权重。”与 GKT 相比，GKT 通常展开固定布局的局部 kernel 后加权，deformable attention 则显式学习稀疏采样位置，因而更灵活。
+
+还要区分 MapTR 中 deformable attention 的两个位置：消融表里的 **Deform. Atten.** 是 BEVFormer 风格的 map encoder，用于“多相机图像 $\rightarrow$ BEV”；map decoder 里也有 deformable cross-attention，但它是让每个层级 point query 以当前预测的二维地图点为 reference point，从**已经生成的 BEV 特征**中取样。二者使用相似算子，但数据源和职责不同。
+
+因此，MapTR 用 GKT 不是因为它定义了 MapTR 的核心方法，而是因为它在该实验设置中兼顾效果、速度和部署便利。原文的单层公平比较为 IPM 46.2、LSS 49.5、deformable attention 49.7、GKT 50.3 mAP；这些结果说明 MapTR decoder 能接不同 BEV encoder，并不表示四种变换在几何假设上等价。机制细节可参见 [GKT](https://arxiv.org/abs/2206.04584)、[LSS](https://arxiv.org/abs/2008.05711) 和 [BEVFormer](https://arxiv.org/abs/2203.17270)。
