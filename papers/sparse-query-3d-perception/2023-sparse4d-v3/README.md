@@ -153,3 +153,53 @@ R50、$256\times704$、nuScenes val：
 - 我真正理解的部分：v3 最有价值的观点是“递归 detector 已经隐式完成了大部分 association”，跟踪可以先从 query identity 而非额外匹配器出发。
 - 仍然不清楚的问题：不使用 ID 约束时，长遮挡、相互交叉和 query 竞争下的 identity 稳定性究竟由什么保证。
 - 后续要读的内容：DN-DETR/DINO 的 query denoising、MOTR 的 track-query matching，以及概率化的置信度校准方法。
+
+## QA
+
+### Q：Sparse4D v3 中 Temporal Instance Denoising 的原理是什么？二分图匹配又是什么？
+
+A：先抓住一句话：Temporal Instance Denoising 是一个**只在训练时使用的辅助任务**。它不是消除图像噪声，而是把 GT 3D box 加上人为扰动，做成一批“离答案不太远的 noisy queries”，让 decoder 反复练习把它们修正回正确目标，并把其中一部分沿时间传播。
+
+#### 为什么需要 denoising？
+
+普通 DETR/Sparse4D 的 learnable queries 一开始既不知道目标在哪里，也没有固定负责哪个 GT。网络输出后，需要通过 Hungarian matching 临时决定 query–GT 对应关系。训练早期预测很差，相邻 epoch 或 decoder layer 中，同一个 GT 可能不断换 query，导致监督不稳定；而 one-to-one matching 对每个 GT 最多只产生一个正样本，decoder 能获得的有效回归训练也很少。
+
+去噪分支相当于给 decoder 增加“带提示的练习题”。对每个 GT anchor $A_i$，生成多组：
+
+$$
+A_{noise}=A_i+\Delta A_{i,j,k}.
+$$
+
+其中一类扰动较小，另一类扰动更远。由于 noisy anchor 已经从 GT 附近起步，decoder 更容易学会“看到这个位置附近的图像特征后，应当怎样修正中心、尺寸、朝向和速度”。论文默认生成 5 组，因此每个 GT 可以在辅助分支中提供多组训练信号；这些 noisy queries 与正常 learnable queries 通过 attention mask 隔离，组与组之间也隔离，避免不同组互相泄露答案。推理时整个 noisy 分支都会删除。
+
+“Temporal”表示论文不只做单帧去噪：它随机选择部分 noisy groups，像正常 temporal instances 一样传到下一帧；anchor 经过 ego-motion 和目标速度补偿，instance feature 直接延续。于是 decoder 不仅学习“把当前帧的扰动框修正回来”，还学习“一个近似正确的实例经过时序传播后，怎样在下一帧继续定位同一目标”。
+
+#### 什么是二分图匹配？
+
+把两类节点放在图的两边：左边是 queries，右边是 GT boxes；任意 query 与任意 GT 之间都有一条边，边的 cost 表示它们有多不匹配。普通 DETR 常用分类代价和 box 几何代价组成 cost matrix：
+
+$$
+C_{ij}=\operatorname{cost}(q_i,g_j).
+$$
+
+Hungarian algorithm 在这个矩阵中寻找总 cost 最小的一组连线，并满足：一个 query 最多连接一个 GT，一个 GT 也最多连接一个 query。这就是 one-to-one bipartite matching。被匹配的 query 是对应 GT 的正样本，未匹配 query 作为背景/负样本。
+
+例如有两个 GT：汽车 A、汽车 B，以及三个 queries。即使 $q_1$ 和 $q_2$ 都很靠近 A，匹配也不能把二者同时分给 A；它可能选择 $q_1\rightarrow A$、$q_3\rightarrow B$，而让 $q_2$ 成为未匹配项。它解决的是**全局唯一分配**，不只是为每个 query 各自找最近 GT。
+
+#### 为什么 noisy queries 也要匹配？
+
+不能简单规定“小扰动一定是正样本，大扰动一定是负样本”。假设由汽车 A 生成的远扰动 anchor 恰好落到汽车 B 附近，那么按噪声幅度硬标成 A 的负样本会与真实几何关系冲突。Sparse4D v3 因此在**每个 noisy group 内**先将 noisy anchors 与当前帧 GT 做一次二分图匹配：每个 GT 最多选一个最合适的 noisy anchor 为正样本，其余作为负样本。论文只说明这里是 anchor–GT pre-matching，没有展开具体 cost 的组成，因此不应擅自等同于某一套固定的分类/L1/IoU 权重。
+
+可以把完整流程记成：
+
+$$
+\text{GT 加噪生成 queries}
+\rightarrow
+\text{每组二分图匹配确定正负}
+\rightarrow
+\text{decoder 学习还原 GT}
+\rightarrow
+\text{部分 query 跨帧传播继续还原}.
+$$
+
+因此，普通 learnable queries 仍负责真正的自由检测；Temporal Instance Denoising 只是训练期的“脚手架”。它用更多、对应关系更稳定的辅助正样本改善收敛，最终并不会要求测试输入包含 GT。
